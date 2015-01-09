@@ -1,0 +1,155 @@
+<?php
+
+/**
+ * Autodetect Language
+ *
+ * This module tries to find a best match between a user's language
+ * and one of the installed site languages. 
+ *
+ * Sets two session variables:
+ * $session->languageAlreadyDetected (true|false)
+ * $session->languageDetectionFailed (returns true if fell back to default);
+ */
+class AutodetectLanguage extends WireData implements Module, ConfigurableModule {
+    
+    /**
+     * Return information about this module (required)
+     *
+     * @return array
+     */
+    public static function getModuleInfo() {
+        return array(
+            'title' => "Autodetect Language",
+            'summary' => "Finds a best match between visitor's language and redirects.",
+            'author' => 'Pierre-Luc Auclair',
+            'version' => 100,
+            'singular' => true,
+            'autoload' => true,
+        ); 
+    }
+
+    public function init() {
+
+        // minify page markup automatically
+        wire()->addHookBefore("Page::render", $this, "detectLanguageRedirect");
+
+    }
+    
+    public function __construct() {
+        $this->defaultSiteLanguageCode = "";
+    }
+
+    public function detectLanguageRedirect(HookEvent $event) {
+        $page = wire("page");
+
+        // defaults to "en" if unset
+        if (empty($this->defaultSiteLanguageCode)) {
+            $this->defaultSiteLanguageCode = "en";
+        }
+
+        if ($this->session->languageAlreadyDetected === null) {
+            // Initalize this session variable. Lets you know when
+            // the language detection failed and fell back to "default"
+            $this->session->languageDetectionFailed = true;
+            
+            $acceptLanguages = explode(";",$_SERVER['HTTP_ACCEPT_LANGUAGE']);
+
+            function cleanAcceptLanguages($string) {
+                $string = $string;
+                $pattern = '/^(q=[0-9\.]+\,?)([\D\d]*)$/i';
+                // get rid of any q=x.x, we only want the language names
+                $replacement = '$2';
+                return strtolower(preg_replace($pattern, $replacement, $string));
+            }
+
+            // strip q=x.x
+            $acceptLanguages = array_map("cleanAcceptLanguages",$acceptLanguages);
+            // remove empty strings
+            $acceptLanguages = array_filter($acceptLanguages);
+            // split any string that looks like "en,en-us" in two
+            foreach ($acceptLanguages as $key => $value) {
+                $pattern = "/^(.+),(.+)$/";
+                if (preg_match($pattern,$value)){
+                    $acceptLanguages[$key] = preg_replace($pattern,"$1", $value);
+                    array_splice($acceptLanguages, $key+1, 0, preg_replace($pattern,"$2", $value));
+                }
+            }
+
+            // make lowercase array from site languages
+            $siteLanguages = array();
+            foreach (wire("languages") as $language) {
+                $languageName = strtolower($language->name);
+                array_push($siteLanguages, $languageName);
+            }
+
+            // remove first item, should always be "default", 
+            // don't wanna match against that
+            $defaultLanguage = array_shift($siteLanguages);
+
+            // add default language code to list
+            array_push($siteLanguages, strtolower($this->defaultSiteLanguageCode));
+            // then track where to put it, if we need to fallback to default
+            $defaultLanguagePosition = sizeof($siteLanguages) - 1;
+
+            // keep track of match, if any
+            $matchedLanguage = "";
+
+            var_dump($acceptLanguages);
+            var_dump($siteLanguages);
+
+            // first try full match (fr-fr)
+            foreach ($acceptLanguages as $accept) {
+                if (array_search($accept,$siteLanguages) !== false) {
+                    var_dump(array_search($accept,$siteLanguages));
+                    $matchedLanguage = $accept;
+                    $languageDetectionFailed = false;
+                    break; // at first match
+                }
+            }
+
+            // if this didn't work, try partial match (fr)
+            if (!isset($accept)) {
+                $substr = function($element) {
+                    return substr($element,0,2);
+                };
+
+                $acceptLanguages = array_map($substr,$acceptLanguages) ;
+                $siteLanguagesShort = array_map($substr,$siteLanguages);
+
+                foreach ($acceptLanguages as $accept) {
+                    if (array_search($accept,$siteLanguagesShort) !== false) {
+                        $matchedLanguage = $accept;
+                        $languageDetectionFailed = false;
+                        break; // at first match
+                    }
+                }
+            }
+
+            // if no match between HTTP_ACCEPT_LANGUAGE and site languages
+            if (empty($matchedLanguage) ) { 
+                $matchedLanguage = $defaultLanguage;
+                $step = 3;
+            } elseif (array_search($matchedLanguage, $siteLanguages) == $defaultLanguagePosition) {
+                $matchedLanguage = $defaultLanguage;
+            }
+
+            // Set some session variables then redirect
+            $this->session->languageAlreadyDetected = true;
+            $this->session->redirect($page->localUrl($matchedLanguage),false);
+        }
+    }
+
+    public static function getModuleConfigInputfields(array $data) {
+        $inputfields = new InputfieldWrapper(); 
+ 
+        // Option to set the default language code
+        $field = wire('modules')->get('InputfieldText');
+        $field->name = 'defaultSiteLanguageCode';
+        $field->label = __("Default system language code");
+        $field->description = __("This setting informs the module what the language code is for the \"default\" system language. You should use a [BCP 47 formatted](http://www.rfc-editor.org/rfc/bcp/bcp47.txt) language code. These are the typical **us** or **en-US** you commonly see. Important note: all your language name fields in Setup > Languages must also conform to this format. **If not set, will default back to \"en\"**.");
+        if(isset($data['defaultSiteLanguageCode'])) $field->value = $data['defaultSiteLanguageCode'];
+        $inputfields->add($field); 
+ 
+        return $inputfields; 
+    }
+}
