@@ -1,5 +1,5 @@
 # AutodetectLanguage
-This ProcessWire 2.x module tries finds a best match between HTTP_LANGUAGE_ACCEPT and currently installed languages. 
+This ProcessWire 2.x module tries finds a best match between HTTP_ACCEPT_LANGUAGE and currently installed languages. 
 
 If a match is found, the user will be redirected from the requested page to the same page in his preferred language. This match occurs only on the first page load, and will work with default caching on.
 
