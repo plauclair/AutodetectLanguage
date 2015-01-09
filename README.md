@@ -14,3 +14,5 @@ The module creates two ProcessWire session variables:
 
 ## Configuration
 Set the language code for "default" language in Modules > Autodetect Language
+
+It is also possible to have the redirect happen only on the homepage by checking **Only detect language on homepage** in module settings.
