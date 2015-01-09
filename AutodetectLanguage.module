@@ -118,7 +118,7 @@ class AutodetectLanguage extends WireData implements Module, ConfigurableModule 
             }
 
             // if this didn't work, try partial match (fr)
-            if (!isset($accept)) {
+            if (empty($matchedLanguage)) {
                 $substr = function($element) {
                     return substr($element,0,2);
                 };
