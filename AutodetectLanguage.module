@@ -22,7 +22,7 @@ class AutodetectLanguage extends WireData implements Module, ConfigurableModule 
             'title' => "Autodetect Language",
             'summary' => "Finds a best match between visitor's language and redirects.",
             'author' => 'Pierre-Luc Auclair',
-            'version' => 100,
+            'version' => 101,
             'singular' => true,
             'autoload' => true,
         ); 
