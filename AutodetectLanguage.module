@@ -37,6 +37,7 @@ class AutodetectLanguage extends WireData implements Module, ConfigurableModule 
     
     public function __construct() {
         $this->defaultSiteLanguageCode = "";
+        $this->onlyOnHomepage = "";
     }
 
     public function detectLanguageRedirect(HookEvent $event) {
@@ -47,7 +48,20 @@ class AutodetectLanguage extends WireData implements Module, ConfigurableModule 
             $this->defaultSiteLanguageCode = "en";
         }
 
-        if ($this->session->languageAlreadyDetected === null) {
+        $run = false;
+
+        if($this->session->languageAlreadyDetected === null) {
+            if($this->onlyOnHomepage == false) {
+                $run = true;
+            } elseif ($this->onlyOnHomepage == true AND $page->id == 1) {
+                $run = true;
+            } else {
+                $run = false;
+                $this->session->languageAlreadyDetected = true;
+            }
+        }        
+
+        if ($run === true) {
             // Initalize this session variable. Lets you know when
             // the language detection failed and fell back to "default"
             $this->session->languageDetectionFailed = true;
@@ -94,13 +108,9 @@ class AutodetectLanguage extends WireData implements Module, ConfigurableModule 
             // keep track of match, if any
             $matchedLanguage = "";
 
-            var_dump($acceptLanguages);
-            var_dump($siteLanguages);
-
             // first try full match (fr-fr)
             foreach ($acceptLanguages as $accept) {
                 if (array_search($accept,$siteLanguages) !== false) {
-                    var_dump(array_search($accept,$siteLanguages));
                     $matchedLanguage = $accept;
                     $languageDetectionFailed = false;
                     break; // at first match
@@ -134,7 +144,9 @@ class AutodetectLanguage extends WireData implements Module, ConfigurableModule 
 
             // Set some session variables then redirect
             $this->session->languageAlreadyDetected = true;
-            $this->session->redirect($page->localUrl($matchedLanguage),false);
+            if (wire('user')->language->name != $matchedLanguage) {
+                $this->session->redirect($page->localUrl($matchedLanguage),false);
+            }
         }
     }
 
@@ -147,8 +159,15 @@ class AutodetectLanguage extends WireData implements Module, ConfigurableModule 
         $field->label = __("Default system language code");
         $field->description = __("This setting informs the module what the language code is for the \"default\" system language. You should use a [BCP 47 formatted](http://www.rfc-editor.org/rfc/bcp/bcp47.txt) language code. These are the typical **us** or **en-US** you commonly see. Important note: all your language name fields in Setup > Languages must also conform to this format. **If not set, will default back to \"en\"**.");
         if(isset($data['defaultSiteLanguageCode'])) $field->value = $data['defaultSiteLanguageCode'];
-        $inputfields->add($field); 
- 
+        $inputfields->add($field);
+
+        $field = wire('modules')->get('InputfieldCheckbox');
+        $field->name ='onlyOnHomepage';
+        $field->label = 'Only detect language on homepage';
+        $field->attr('value', $data['onlyOnHomepage'] ? $data['onlyOnHomepage'] : 0 );
+        $field->attr('checked', $data['onlyOnHomepage'] === 1 ? 'checked' : '' );
+        $inputfields->add($field);
+
         return $inputfields; 
     }
 }
