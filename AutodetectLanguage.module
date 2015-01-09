@@ -128,7 +128,6 @@ class AutodetectLanguage extends WireData implements Module, ConfigurableModule 
             // if no match between HTTP_ACCEPT_LANGUAGE and site languages
             if (empty($matchedLanguage) ) { 
                 $matchedLanguage = $defaultLanguage;
-                $step = 3;
             } elseif (array_search($matchedLanguage, $siteLanguages) == $defaultLanguagePosition) {
                 $matchedLanguage = $defaultLanguage;
             }
