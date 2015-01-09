@@ -29,10 +29,7 @@ class AutodetectLanguage extends WireData implements Module, ConfigurableModule 
     }
 
     public function init() {
-
-        // minify page markup automatically
         wire()->addHookBefore("Page::render", $this, "detectLanguageRedirect");
-
     }
     
     public function __construct() {
