@@ -5,7 +5,7 @@ If a match is found, the user will be redirected from the requested page to the 
 
 For example:
 - User requests http://example.com/fr/a-propos
-- Module detects a preference for English
+- Module detects a preference for English. At first, the module tries to do a "full match" using the full language name (e.g. en-US -> en-US). If no match is found, it will fall back to a "partial match" using only the first part of the name (e.g. fr-CA -> fr-FR, matched with "fr" only).
 - User is redirected to http://example.com/en/about
 
 The module creates two ProcessWire session variables:
