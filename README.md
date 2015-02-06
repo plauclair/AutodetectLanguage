@@ -16,3 +16,9 @@ The module creates two ProcessWire session variables:
 Set the language code for the "default" language in Modules > Autodetect Language.
 
 It is also possible to have the redirect happen only on the homepage by checking **Only detect language on homepage** in module settings.
+
+## Support
+Please use the [bug tracker](https://github.com/plauclair/AutodetectLanguage/issues) to submit bugs and feature requests.
+
+## Licence
+Licensed under the [MIT License (MIT)](http://opensource.org/licenses/MIT). Copyright © 2014 Pierre-Luc Auclair
