@@ -144,7 +144,8 @@ class AutodetectLanguage extends WireData implements Module, ConfigurableModule 
                 // Set some session variables then redirect
                 $this->session->languageAlreadyDetected = true;
                 if (wire('user')->language->name != $matchedLanguage) {
-                    $this->session->redirect($page->localUrl($matchedLanguage), false);
+                    $params = isset($_SERVER['QUERY_STRING']) ? "?".$_SERVER['QUERY_STRING'] : "";
+                    $this->session->redirect($page->localUrl($matchedLanguage).$params,false);
                 }
             }
         }
