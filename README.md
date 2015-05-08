@@ -17,6 +17,8 @@ Set the language code for the "default" language in Modules > Autodetect Languag
 
 It is also possible to have the redirect happen only on the homepage by checking **Only detect language on homepage** in module settings.
 
+You must also use [BCP 47 formatted](http://www.rfc-editor.org/rfc/bcp/bcp47.txt) language codes as your language *names*. These are the typical **us** or **en-US** you commonly see. **If not set, will default back to "en"**.
+
 ## Support
 Please use the [bug tracker](https://github.com/plauclair/AutodetectLanguage/issues) to submit bugs and feature requests.
 
