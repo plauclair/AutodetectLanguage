@@ -22,7 +22,7 @@ class AutodetectLanguage extends WireData implements Module, ConfigurableModule 
             'title' => "Autodetect Language",
             'summary' => "Finds a best match between visitor's language and redirects.",
             'author' => 'Pierre-Luc Auclair',
-            'version' => 102,
+            'version' => 103,
             'singular' => true,
             'autoload' => true,
         ); 
@@ -35,6 +35,7 @@ class AutodetectLanguage extends WireData implements Module, ConfigurableModule 
     public function __construct() {
         $this->defaultSiteLanguageCode = "";
         $this->onlyOnHomepage = "";
+	$this->noDetectGetParam = "";
     }
 
     public function detectLanguageRedirect(HookEvent $event) {
@@ -143,7 +144,7 @@ class AutodetectLanguage extends WireData implements Module, ConfigurableModule 
 
                 // Set some session variables then redirect
                 $this->session->languageAlreadyDetected = true;
-                if (wire('user')->language->name != $matchedLanguage) {
+                if (wire('user')->language->name != $matchedLanguage AND !isset(wire('input')->get->{$this->noDetectGetParam})) {
                     $this->session->redirect($page->localUrl($matchedLanguage), false);
                 }
             }
@@ -167,6 +168,13 @@ class AutodetectLanguage extends WireData implements Module, ConfigurableModule 
         $field->attr('value', $data['onlyOnHomepage'] ? $data['onlyOnHomepage'] : 0 );
         $field->attr('checked', $data['onlyOnHomepage'] === 1 ? 'checked' : '' );
         $inputfields->add($field);
+
+	$field = wire('modules')->get('InputfieldText');
+	$field->name = 'noDetectGetParam';
+	$field->label = __("Do not detect language if GET parameter is set");
+	$field->description = __("If this GET parameter is set, AutodetectLanguage will not try to detect the user's language. This might be helpful for newsletters or other things. For example, if you were to set this setting to \"nodetect\" and the page would be accessed via *http://example.com/?nodetect*, redirection to the preferred user's language will not happen.");
+	if(isset($data['noDetectGetParam'])) $field->value = $data['noDetectGetParam'];
+	$inputfields->add($field);
 
         return $inputfields; 
     }

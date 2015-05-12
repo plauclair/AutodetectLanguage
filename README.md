@@ -15,7 +15,27 @@ The module creates two ProcessWire session variables:
 ## Configuration
 Set the language code for the "default" language in Modules > Autodetect Language.
 
-It is also possible to have the redirect happen only on the homepage by checking **Only detect language on homepage** in module settings.
+You must also use [BCP 47 formatted](http://www.rfc-editor.org/rfc/bcp/bcp47.txt) language codes as your language **names**. These are the typical **us** or **en-US** you commonly see. **If not set, will default back to "en"**.
+
+It is possible to have the redirect happen only on the homepage by checking **Only detect language on homepage** in module settings.
+
+Additionally, you can set a GET parameter to prevent language redirection on some requests with **Do not detect language if GET parameter is set**.
+
+## Changes
+
+### 1.0.3
+- This version introduces a new option: "Do not detect language if GET parameter is set". Usage info can be found in the *Configuration* section of this document.
+
+### 1.0.2 
+- Add check if isset http\_accept\_language that could cause a warning if the website is requested through a REST call, for example.
+
+### 1.0.1
+- Removed debug stuff.
+- Add option to detect the user language only on the homepage.
+- Do not redirect if the requested page is already using the best language match.
+
+### 1.0.0
+- Initial commit.
 
 You must also use [BCP 47 formatted](http://www.rfc-editor.org/rfc/bcp/bcp47.txt) language codes as your language *names*. These are the typical **us** or **en-US** you commonly see. **If not set, will default back to "en"**.
 
