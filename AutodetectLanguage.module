@@ -36,11 +36,13 @@ class AutodetectLanguage extends WireData implements Module, ConfigurableModule 
         $this->defaultSiteLanguageCode = "";
         $this->onlyOnHomepage = "";
 	$this->noDetectGetParam = "";
+        $this->noBackend = 1;
     }
 
     public function detectLanguageRedirect(HookEvent $event) {
-        if (isset($_SERVER['HTTP_ACCEPT_LANGUAGE'])) {
-            $page = wire("page");
+        $page = $event->object;
+        if (isset($_SERVER['HTTP_ACCEPT_LANGUAGE'])
+            AND ($page->template != "admin" OR $this->noBackend == false)) {
 
             // defaults to "en" if unset
             if (empty($this->defaultSiteLanguageCode)) {
@@ -176,6 +178,13 @@ class AutodetectLanguage extends WireData implements Module, ConfigurableModule 
 	if(isset($data['noDetectGetParam'])) $field->value = $data['noDetectGetParam'];
 	$inputfields->add($field);
 
-        return $inputfields; 
+        $field = wire('modules')->get('InputfieldCheckbox');
+        $field->name ='noBackend';
+        $field->label = 'Only detect language on frontend';
+        $field->attr('value', $data['noBackend'] ? $data['noBackend'] : 0 );
+        $field->attr('checked', $data['noBackend'] === 1 ? 'checked' : '' );
+        $inputfields->add($field);
+
+        return $inputfields;
     }
 }
