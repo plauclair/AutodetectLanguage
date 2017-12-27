@@ -4,14 +4,14 @@
  * Autodetect Language
  *
  * This module tries to find a best match between a user's language
- * and one of the installed site languages. 
+ * and one of the installed site languages.
  *
  * Sets two session variables:
  * $session->languageAlreadyDetected (true|false)
  * $session->languageDetectionFailed (returns true if fell back to default);
  */
 class AutodetectLanguage extends WireData implements Module, ConfigurableModule {
-    
+
     /**
      * Return information about this module (required)
      *
@@ -22,25 +22,49 @@ class AutodetectLanguage extends WireData implements Module, ConfigurableModule 
             'title' => "Autodetect Language",
             'summary' => "Finds a best match between visitor's language and redirects.",
             'author' => 'Pierre-Luc Auclair',
-            'version' => 103,
+            'version' => 104,
             'singular' => true,
             'autoload' => true,
-        ); 
+        );
     }
 
-    public function init() {
-        wire()->addHookBefore("Page::render", $this, "detectLanguageRedirect");
+    // ------------------------------------------------------------------------
+
+    /**
+     * Default configuration for module
+     *
+     */
+    static public function getDefaultData() {
+        return array(
+            "defaultSiteLanguageCode" => "",
+            "onlyOnHomepage" => "",
+            "noDetectGetParam" => ""
+        );
     }
-    
+
+    // ------------------------------------------------------------------------
+
+    /**
+     * Populate the default config data
+     *
+     */
     public function __construct() {
-        $this->defaultSiteLanguageCode = "";
-        $this->onlyOnHomepage = "";
-	$this->noDetectGetParam = "";
+        foreach(self::getDefaultData() as $key => $value) {
+            $this->$key = $value;
+        }
     }
+
+    // ------------------------------------------------------------------------
+
+    public function init() {
+        $this->wire()->addHookBefore("Page::render", $this, "detectLanguageRedirect");
+    }
+
+    // ------------------------------------------------------------------------
 
     public function detectLanguageRedirect(HookEvent $event) {
         if (isset($_SERVER['HTTP_ACCEPT_LANGUAGE'])) {
-            $page = wire("page");
+            $page = $this->wire("page");
 
             // defaults to "en" if unset
             if (empty($this->defaultSiteLanguageCode)) {
@@ -91,7 +115,7 @@ class AutodetectLanguage extends WireData implements Module, ConfigurableModule 
 
                 // make lowercase array from site languages
                 $siteLanguages = array();
-                foreach (wire("languages") as $language) {
+                foreach ($this->wire("languages") as $language) {
                     $languageName = strtolower($language->name);
                     array_push($siteLanguages, $languageName);
                 }
@@ -144,16 +168,20 @@ class AutodetectLanguage extends WireData implements Module, ConfigurableModule 
 
                 // Set some session variables then redirect
                 $this->session->languageAlreadyDetected = true;
-                if (wire('user')->language->name != $matchedLanguage AND !isset(wire('input')->get->{$this->noDetectGetParam})) {
+                if ($this->wire('user')->language->name != $matchedLanguage AND !isset($this->wire('input')->get->{$this->noDetectGetParam})) {
                     $this->session->redirect($page->localUrl($matchedLanguage), false);
                 }
             }
         }
     }
 
+    // ------------------------------------------------------------------------
+
     public static function getModuleConfigInputfields(array $data) {
-        $inputfields = new InputfieldWrapper(); 
- 
+
+        $data = array_merge(self::getDefaultData(), $data);
+        $inputfields = new InputfieldWrapper();
+
         // Option to set the default language code
         $field = wire('modules')->get('InputfieldText');
         $field->name = 'defaultSiteLanguageCode';
@@ -169,13 +197,13 @@ class AutodetectLanguage extends WireData implements Module, ConfigurableModule 
         $field->attr('checked', $data['onlyOnHomepage'] === 1 ? 'checked' : '' );
         $inputfields->add($field);
 
-	$field = wire('modules')->get('InputfieldText');
-	$field->name = 'noDetectGetParam';
-	$field->label = __("Do not detect language if GET parameter is set");
-	$field->description = __("If this GET parameter is set, AutodetectLanguage will not try to detect the user's language. This might be helpful for newsletters or other things. For example, if you were to set this setting to \"nodetect\" and the page would be accessed via *http://example.com/?nodetect*, redirection to the preferred user's language will not happen.");
-	if(isset($data['noDetectGetParam'])) $field->value = $data['noDetectGetParam'];
-	$inputfields->add($field);
+        $field = wire('modules')->get('InputfieldText');
+        $field->name = 'noDetectGetParam';
+        $field->label = __("Do not detect language if GET parameter is set");
+        $field->description = __("If this GET parameter is set, AutodetectLanguage will not try to detect the user's language. This might be helpful for newsletters or other things. For example, if you were to set this setting to \"nodetect\" and the page would be accessed via *http://example.com/?nodetect*, redirection to the preferred user's language will not happen.");
+        if(isset($data['noDetectGetParam'])) $field->value = $data['noDetectGetParam'];
+        $inputfields->add($field);
 
-        return $inputfields; 
+        return $inputfields;
     }
 }
